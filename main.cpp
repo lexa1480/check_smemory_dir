@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     if( !CheckCommandLineArgs( argc, argv, vm ) ){
         return 1;
     }
-
+//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     path p(vm["path"].as<std::string>());
     int count = 0;
     int size = 0;
