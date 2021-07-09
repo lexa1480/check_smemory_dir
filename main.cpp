@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //Модификаторы вывода внутри фунции + мод в одну строку
     path p(vm["path"].as<std::string>());
     int count = 0;
     int size = 0;
