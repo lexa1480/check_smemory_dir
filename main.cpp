@@ -2,7 +2,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/locale.hpp>
 #include <iomanip>
-\
+
 #include "CommandLineArgs.h"
 
 using std::cout;
@@ -30,42 +30,67 @@ std::string CONS(const char* pText)
     return sRes;
 }
 
-bool dry_run(path& p,int& count,int& size,variables_map& vm){
-
-    try{
-        if( ( !exists(p) ) && ( !is_directory(p) ) ){
-            cout << p << "ERR> Данный путь не существует или не ведет к каталогу" << endl;
-            return true;
-        }
-
-        char Myend = '\n';
-        if(vm.count("one_line")){
-            Myend = ' ';
-        }
-
-        recursive_directory_iterator iter (p) ;
-        recursive_directory_iterator end;
-        cout <<"Выбранная директория содержитв себе: " << endl;
-        while(iter != end){
-            if(is_regular_file(iter->path())){
-                count++;
-                size = size + file_size(iter->path());
-                if( (!vm.count("errors")) && (vm.count("file")) ){
-                    cout << "      Файл: " << iter->path() << Myend;
-                }
-            }
-            if(is_directory(iter->path())){
-                if( (!vm.count("errors")) && (vm.count("file")) ){
-                    cout << "Директория: " << iter->path() << Myend;
-                }
-            }
-            iter++;
-        }
-    }catch (const filesystem_error& ex){
-        cout << ex.what() << endl;
+void Print(std::vector<path>& Files ,int&count ,bool deliting,bool errors ,bool file ,bool one_line ,bool precent){
+    char MyEnd = '\n';
+    if(one_line){
+        MyEnd = ' ';
     }
-    return false;
+    for(int i = 0; i<count ;i++){
+        if( !errors && precent){
+            cout << (i*100/count) << "%" << " Уже удалено ";
+        }
+        if( !errors && file ){
+            cout << Files.at(i) << MyEnd;
+        }
+        if(deliting){
+            try{
+                remove(Files.at(i));
+                cout << " Deleted " << MyEnd;
+            }catch (const filesystem_error& ex){
+                std::cerr << "ERR> " <<ex.what() << MyEnd;
+            }
+        }
+    }
+    if( !errors && precent){
+        cout << 100 << "%" << " Уже удалено" << '\n';
+    }
 }
+
+void Fun(std::vector<path>& Files ,bool dry_run ,bool ask ,bool errors ,bool file ,bool one_line ,bool percent,path& p){
+    int count = Files.size();
+    int size = 0;
+    if(ask){
+        for(int i = 0; i<count ;i++){
+            try{
+                size += file_size(Files.at(i));
+            }catch (const filesystem_error& ex){
+                std::cerr << "ERR> " <<ex.what() << endl;
+            }
+        }
+        cout << "Удалять?" << "Кол-во " << count << " Вес " << size << " Y/N" << endl;
+        char ch;
+        cin >> ch;
+        if(ch == 'Y'){
+            if(dry_run){
+                Print(Files ,count ,false, errors, file, one_line, percent);
+            }else{
+                Print(Files ,count ,true , errors, file, one_line, percent);
+                remove_all(p);
+            }
+        }else{
+            return;
+        }
+    }else{
+        if(dry_run){
+            Print(Files ,count ,false , errors, file, one_line, percent);
+        }else{
+            Print(Files ,count ,true , errors, file, one_line, percent);
+            remove_all(p);
+        }
+    }
+}
+
+
 
 int main(int argc, char *argv[])
 {
@@ -76,35 +101,21 @@ int main(int argc, char *argv[])
     cout << CONS("INF> ___ Запуск ___") << endl;
 
     variables_map vm;
-    if( !CheckCommandLineArgs( argc, argv, vm ) ){
-        return 1;
-    }
+    if( CheckCommandLineArgs( argc, argv, vm ) ){
 
-    path p(vm["path"].as<std::string>());
-    int count = 0;
-    int size = 0;
-    if(dry_run(p,count,size,vm)){
-        return 1;
-    }
-
-    if(vm.count("ask")){
-        cout << "\nВы уверены что хотите удалить " << count << " файлов. Общим объемом " << size << " : Y/N" << endl;
-        char ch;
-        cin >> ch;
-        if(ch == 'Y'){
-            if(vm.count("dry_run")){
-                remove_all(p);
-            }
-            cout << "INF> Удалениe произведено успешно" << endl;
+        path p(vm["path"].as<std::string>());
+        if( is_directory(p) ){
+            recursive_directory_iterator begin(p);
+            recursive_directory_iterator end;
+            std::vector<path> Files;
+            std::copy_if(begin, end, std::back_inserter(Files), [](const path& path) {
+                        return is_regular_file(path);
+                    });
+            Fun(Files,vm.count("dry_run") ,vm.count("ask") ,vm.count("errors") ,vm.count("file") ,vm.count("one_line") ,vm.count("percent"),p);
         }else{
-            cout << "INF> Отмена удаления произведена успешно" << endl;
+            std::cerr << "ERR> Данный путь не существует или не ведет к каталогу" << endl;
         }
-    }else{
-        if(vm.count("dry_run")){
-            remove_all(p);
-        }
-        cout << "INF> Удалениe произведено успешно" << endl;
     }
 
-    cout << CONS("\n>>>> ___ Останов ___") << endl;
+    cout << CONS("INF> ___ Останов ___") << endl;
 }

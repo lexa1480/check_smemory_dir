@@ -26,7 +26,7 @@ bool CheckCommandLineArgs(int ac, char* av[], variables_map& vm ){
         store(parsed, vm);
 
         if( vm.count("help") || ( vm.size() == 0 ) ){
-            std::cout << desc << "\n";
+            std::cout << desc;
         }else{
             notify(vm);
             bContinueExecution = true;
