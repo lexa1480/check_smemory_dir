@@ -11,25 +11,6 @@ using std::cin;
 using namespace boost::filesystem;
 using namespace boost::system;
 
-std::string CONS(const char* pText)
-{
-    std::string sRes;
-#ifdef WIN32
-    try
-    {
-        sRes = boost::locale::conv::between(pText, "cp-1251", "utf-8");
-    }
-    catch(const std::exception& e)
-    {
-        std::cout << "EXC> " << e.what() << std::endl;
-    }
-#else //WIN32
-    sRes = pText;
-#endif//WIN32
-
-    return sRes;
-}
-
 void Print(std::vector<path>& Files ,int&count ,bool deliting,bool errors ,bool file ,bool one_line ,bool precent){
     char MyEnd = '\n';
     if(one_line){
@@ -37,7 +18,7 @@ void Print(std::vector<path>& Files ,int&count ,bool deliting,bool errors ,bool 
     }
     for(int i = 0; i<count ;i++){
         if( !errors && precent){
-            cout << (i*100/count) << "%" << " Уже удалено ";
+            cout << (i*100/count) << CONS("% Уже удалено ");
         }
         if( !errors && file ){
             cout << Files.at(i) << MyEnd;
@@ -45,14 +26,13 @@ void Print(std::vector<path>& Files ,int&count ,bool deliting,bool errors ,bool 
         if(deliting){
             try{
                 remove(Files.at(i));
-                cout << " Deleted " << MyEnd;
             }catch (const filesystem_error& ex){
                 std::cerr << "ERR> " <<ex.what() << MyEnd;
             }
         }
     }
     if( !errors && precent){
-        cout << 100 << "%" << " Уже удалено" << '\n';
+        cout << CONS("100% Уже удалено") << '\n';
     }
 }
 
@@ -64,10 +44,10 @@ void Fun(std::vector<path>& Files ,bool dry_run ,bool ask ,bool errors ,bool fil
             try{
                 size += file_size(Files.at(i));
             }catch (const filesystem_error& ex){
-                std::cerr << "ERR> " <<ex.what() << endl;
+                std::cerr << CONS("ERR> ") <<ex.what() << endl;
             }
         }
-        cout << "Удалять?" << "Кол-во " << count << " Вес " << size << " Y/N" << endl;
+        cout << CONS("Удалить каталог с количеством файлов равным ") << count << CONS(" и весом ") << size << CONS(". Y/N") << endl;
         char ch;
         cin >> ch;
         if(ch == 'Y'){
@@ -113,7 +93,7 @@ int main(int argc, char *argv[])
                     });
             Fun(Files,vm.count("dry_run") ,vm.count("ask") ,vm.count("errors") ,vm.count("file") ,vm.count("one_line") ,vm.count("percent"),p);
         }else{
-            std::cerr << "ERR> Данный путь не существует или не ведет к каталогу" << endl;
+            std::cerr << CONS("ERR> Данный путь не существует или не ведет к каталогу") << endl;
         }
     }
 

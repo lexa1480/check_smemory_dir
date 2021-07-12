@@ -3,6 +3,7 @@
 
 #include <boost/program_options.hpp>
 #include <iostream>
+#include "CONS.h"
 
 using namespace boost::program_options;
 
@@ -32,9 +33,9 @@ bool CheckCommandLineArgs(int ac, char* av[], variables_map& vm ){
             bContinueExecution = true;
         }
     }catch(std::exception& e){
-        std::cerr << "ERR> " << e.what() << std::endl;
+        std::cerr << CONS("ERR> ") << e.what() << std::endl;
     }catch(...){
-        std::cerr << "ERR> Exception of unknown type!" << std::endl;
+        std::cerr << CONS("ERR> Exception of unknown type!") << std::endl;
     }
 
     return bContinueExecution;
