@@ -1,7 +1,7 @@
 #ifndef CONS_H
 #define CONS_H
 
-std::string CONS(const char* pText)
+std::string Cons(const char* pText)
 {
     std::string sRes;
 #ifdef WIN32
