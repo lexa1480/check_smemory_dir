@@ -5,17 +5,18 @@
 #include <iostream>
 #include "Cons.h"
 
-using namespace boost::program_options;
 
-bool CheckCommandLineArgs(int ac, char* av[], variables_map& vm ){
 
+inline bool CheckCommandLineArgs(int ac, char* av[], boost::program_options::variables_map& vm ){
+
+    namespace po = boost::program_options;
     bool bContinueExecution = false;
     try
     {
-        options_description desc("INF> Allowed options");
+        po::options_description desc("INF> Allowed options");
         desc.add_options()
                 ("help", "Produce help message")
-                ("path_dir", value<std::string>(), "Include path")
+                ("path_dir", po::value<std::string>(), "Include path")
                 ("dry_run", "Dry_run")
                 ("ask", "Ask delete")
                 ("one_line_out", "Format output: one_line")
@@ -24,21 +25,24 @@ bool CheckCommandLineArgs(int ac, char* av[], variables_map& vm ){
                 ("percent_out", "Format output: percent of delete files")
                 ;
 
-        parsed_options parsed = command_line_parser(ac, av).options(desc).allow_unregistered().run();
-        store(parsed, vm);
+        po::parsed_options parsed = po::command_line_parser(ac, av).options(desc).allow_unregistered().run();
+        po::store(parsed, vm);
 
         if( vm.count("help") || ( vm.size() == 0 ) )
         {
             std::cout << desc;
-        }else
+        }
+        else
         {
             notify(vm);
             bContinueExecution = true;
         }
-    }catch(std::exception& e)
+    }
+    catch(std::exception& e)
     {
         std::cerr << Cons("ERR> ") << e.what() << std::endl;
-    }catch(...)
+    }
+    catch(...)
     {
         std::cerr << Cons("ERR> Exception of unknown type!") << std::endl;
     }

@@ -1,10 +1,11 @@
 QT += core
 QT -= gui
 
-QMAKE_CXXFLAGS += -std=c++0x
+CONFIG += c++98
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG += boost164
+
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
