@@ -20,21 +20,21 @@ namespace bfs = boost::filesystem;
     }
 #endif//WIN32
 
-void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, bool bErrorsOut, bool bFilePathOut, bool bOneLineOut, bool bPrecentOut){
+void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, boost::program_options::variables_map& vm){
 
     for(int i = 0; i<iCount; i++)
     {
-        if( !bErrorsOut && bFilePathOut )
+        if( !(vm.count(c_szArgErrorsOut)) && (vm.count(c_szArgFilePathOut)) )
         {
-            if(bOneLineOut)
+            if(vm.count(c_szArgOneLineOut))
             {
-                if(bPrecentOut)
+                if(vm.count(c_szArgPercentOut))
                 {
-                    std::cout << vFilesPath.at(i) << Cons(" ") << (i*100/iCount) << Cons("% Уже удалено                          ") << '\r' << std::flush;
+                    std::cout << std::setfill(' ') << std::setw(3) << (i*100/iCount) << Cons("% :") << vFilesPath.at(i) << Cons("                    ") << '\r' << std::flush;
                     if(i == iCount-1)
                     {
                         Sleep(1000);
-                        std::cout << Cons("100% Уже удалено                          ") << std::endl;
+                        std::cout << Cons("100%                          ") << std::endl;
                     }
                 }
                 else
@@ -66,10 +66,14 @@ void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bD
     }
 }
 
-void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, bool bDryRun, bool bAsk, bool bErrorsOut , bool bFilePathOut, bool bOneLineOut, bool bPrecentOut, bfs::path& pathDir){
+void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_options::variables_map& vm){
+
+    bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
+
     int iCountFiles = vFilesPath.size();
     int iSizeAllFiles = 0;
-    if(bAsk){
+    if(vm.count(c_szArgAsk))
+    {
         for(int i = 0; i<iCountFiles; i++)
         {
             try
@@ -86,13 +90,13 @@ void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, bool bDryRun, bool b
         std::cin >> ch;
         if(ch == 'Y')
         {
-            if(bDryRun)
+            if(vm.count(c_szArgDryRun))
             {
-                OutputAndDeletFile(vFilesPath, iCountFiles, false, bErrorsOut, bFilePathOut, bOneLineOut, bPrecentOut);
+                OutputAndDeletFile(vFilesPath, iCountFiles, false, vm);
             }
             else
             {
-                OutputAndDeletFile(vFilesPath, iCountFiles, true, bErrorsOut, bFilePathOut, bOneLineOut, bPrecentOut);
+                OutputAndDeletFile(vFilesPath, iCountFiles, true, vm);
                 bfs::remove_all(pathDir);
             }
         }
@@ -103,13 +107,13 @@ void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, bool bDryRun, bool b
     }
     else
     {
-        if(bDryRun)
+        if(vm.count(c_szArgDryRun))
         {
-            OutputAndDeletFile(vFilesPath, iCountFiles, false, bErrorsOut, bFilePathOut, bOneLineOut, bPrecentOut);
+            OutputAndDeletFile(vFilesPath, iCountFiles, false, vm);
         }
         else
         {
-            OutputAndDeletFile(vFilesPath, iCountFiles, true, bErrorsOut, bFilePathOut, bOneLineOut, bPrecentOut);
+            OutputAndDeletFile(vFilesPath, iCountFiles, true, vm);
             bfs::remove_all(pathDir);
         }
     }
@@ -123,36 +127,32 @@ int main(int argc, char *argv[])
     SetConsoleOutputCP(1251);
 #endif//WIN32
 
-    std::cout << Cons("INF> ___ Запуск ___") << std::endl;
 
     boost::program_options::variables_map vm;
     if( CheckCommandLineArgs( argc, argv, vm ) )
     {
 
-        bfs::path pathDir(vm["path_dir"].as<std::string>());
+        bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
         if( bfs::is_directory(pathDir) )
         {
-            bfs::recursive_directory_iterator begin(pathDir);
+            bfs::recursive_directory_iterator itPath(pathDir);
             bfs::recursive_directory_iterator end;
             std::vector<bfs::path> vFilesPath;
 
-            std::cout << "Start Copy" << std::endl;
-            while(begin != end)
+            while(itPath != end)
             {
-                if(bfs::is_regular_file(begin->path()))
+                if(bfs::is_regular_file(itPath->path()))
                 {
-                    vFilesPath.push_back(begin->path());
+                    vFilesPath.push_back(itPath->path());
                 }
-                begin++;
+                itPath++;
             }
 
-            ChoiceAskAndDryRun(vFilesPath, vm.count("dry_run"), vm.count("ask"), vm.count("errors_out"), vm.count("file_path_out"), vm.count("one_line_out"), vm.count("percent_out"), pathDir);
+            ChoiceAskAndDryRun(vFilesPath, vm);
         }
         else
         {
             std::cerr << Cons("ERR> Данный путь не существует или не ведет к каталогу") << std::endl;
         }
     }
-
-    std::cout << Cons("INF> ___ Останов ___") << std::endl;
 }
