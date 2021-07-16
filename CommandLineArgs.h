@@ -14,7 +14,8 @@ const char c_szArgErrorsOut[] = "errors_out";
 const char c_szArgFilePathOut[] = "file_path_out";
 const char c_szArgPercentOut[] = "percent_out";
 
-inline bool CheckCommandLineArgs(int ac, char* av[], boost::program_options::variables_map& vm ){
+inline bool CheckCommandLineArgs(int ac, char* av[], boost::program_options::variables_map& vm )
+{
 
     namespace po = boost::program_options;
     bool bContinueExecution = false;

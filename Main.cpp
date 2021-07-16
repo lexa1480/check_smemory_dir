@@ -1,4 +1,3 @@
-#include <QCoreApplication>
 #include <boost/filesystem.hpp>
 #include <boost/locale.hpp>
 #include <iomanip>
@@ -20,7 +19,8 @@ namespace bfs = boost::filesystem;
     }
 #endif//WIN32
 
-void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, boost::program_options::variables_map& vm){
+void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, boost::program_options::variables_map& vm)
+{
 
     for(int i = 0; i<iCount; i++)
     {
@@ -66,7 +66,8 @@ void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bD
     }
 }
 
-void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_options::variables_map& vm){
+void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_options::variables_map& vm)
+{
 
     bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
 
