@@ -38,7 +38,6 @@ Thumbs.db
 # qtcreator generated files
 *.pro.user*
 output/
-check_smemory_dir
 
 # xemacs temporary files
 *.flc
