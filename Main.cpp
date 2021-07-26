@@ -1,3 +1,14 @@
+#ifdef  WIN32
+#include <tchar.h>
+#include <conio.h>
+#endif//WIN32
+
+#ifdef NDIAG
+#include <NDiag.h>
+using namespace NDiag;
+//IMPLEMENT_NDIAG_MAIN()
+#endif//NDIAG
+
 #include <boost/filesystem.hpp>
 #include <boost/locale.hpp>
 #include <iomanip>
@@ -5,6 +16,7 @@
 #include <cstdio>
 
 #include "CommandLineArgs.h"
+#include <sphere/clnSmemory.h>
 
 namespace bfs = boost::filesystem;
 
@@ -19,7 +31,8 @@ namespace bfs = boost::filesystem;
     }
 #endif//WIN32
 
-void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, boost::program_options::variables_map& vm)
+
+void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bDeliting, boost::program_options::variables_map& vm, smemory::CClnSmemory& libSmemory)
 {
 
     for(int i = 0; i<iCount; i++)
@@ -56,7 +69,7 @@ void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bD
         {
             try
             {
-                remove(vFilesPath.at(i));
+                libSmemory.FileClear(vFilesPath.at(i).c_str(), true);
             }
             catch (const bfs::filesystem_error& ex)
             {
@@ -66,7 +79,7 @@ void OutputAndDeletFile(std::vector<bfs::path>& vFilesPath, int& iCount, bool bD
     }
 }
 
-void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_options::variables_map& vm)
+void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_options::variables_map& vm, smemory::CClnSmemory& libSmemory)
 {
 
     bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
@@ -93,11 +106,11 @@ void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_optio
         {
             if(vm.count(c_szArgDryRun))
             {
-                OutputAndDeletFile(vFilesPath, iCountFiles, false, vm);
+                OutputAndDeletFile(vFilesPath, iCountFiles, false, vm, libSmemory);
             }
             else
             {
-                OutputAndDeletFile(vFilesPath, iCountFiles, true, vm);
+                OutputAndDeletFile(vFilesPath, iCountFiles, true, vm, libSmemory);
                 bfs::remove_all(pathDir);
             }
         }
@@ -110,11 +123,11 @@ void ChoiceAskAndDryRun(std::vector<bfs::path>& vFilesPath, boost::program_optio
     {
         if(vm.count(c_szArgDryRun))
         {
-            OutputAndDeletFile(vFilesPath, iCountFiles, false, vm);
+            OutputAndDeletFile(vFilesPath, iCountFiles, false, vm, libSmemory);
         }
         else
         {
-            OutputAndDeletFile(vFilesPath, iCountFiles, true, vm);
+            OutputAndDeletFile(vFilesPath, iCountFiles, true, vm, libSmemory);
             bfs::remove_all(pathDir);
         }
     }
@@ -128,32 +141,59 @@ int main(int argc, char *argv[])
     SetConsoleOutputCP(1251);
 #endif//WIN32
 
+#ifdef NDIAG
+    CNDiagMain* pNDiag = CNDiagMain::GetObj();
+    if(pNDiag)
+        pNDiag->Open( "t_smemory_file", "t_smemory_file", "1.0.0" );
+#endif//NDIAG
 
-    boost::program_options::variables_map vm;
-    if( CheckCommandLineArgs( argc, argv, vm ) )
+    smemory::CClnSmemory libSmemory;
+    if( !libSmemory.Load() )
     {
-
-        bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
-        if( bfs::is_directory(pathDir) )
-        {
-            bfs::recursive_directory_iterator itPath(pathDir);
-            bfs::recursive_directory_iterator end;
-            std::vector<bfs::path> vFilesPath;
-
-            while(itPath != end)
-            {
-                if(bfs::is_regular_file(itPath->path()))
-                {
-                    vFilesPath.push_back(itPath->path());
-                }
-                itPath++;
-            }
-
-            ChoiceAskAndDryRun(vFilesPath, vm);
-        }
-        else
-        {
-            std::cerr << Cons("ERR> Данный путь не существует или не ведет к каталогу") << std::endl;
-        }
+        std::cout << Cons("ERR> Библиотека не загружена") << std::endl;
     }
+    else if( !libSmemory.Open() )
+    {
+        std::cout << Cons("ERR> Библиотека не открыта") << std::endl;
+    }
+    else
+    {
+        std::cout << Cons(">>>> Библиотека загружена. GetVer=") << libSmemory.GetVer() << std::endl;
+
+        boost::program_options::variables_map vm;
+        if( CheckCommandLineArgs( argc, argv, vm ) )
+        {
+
+            bfs::path pathDir(vm[c_szArgPathDir].as<std::string>());
+            if( bfs::is_directory(pathDir) )
+            {
+                bfs::recursive_directory_iterator itPath(pathDir);
+                bfs::recursive_directory_iterator end;
+                std::vector<bfs::path> vFilesPath;
+
+                while(itPath != end)
+                {
+                    if(bfs::is_regular_file(itPath->path()))
+                    {
+                        vFilesPath.push_back(itPath->path());
+                    }
+                    itPath++;
+                }
+
+                ChoiceAskAndDryRun(vFilesPath, vm, libSmemory);
+            }
+            else
+            {
+                std::cerr << Cons("ERR> Данный путь не существует или не ведет к каталогу") << std::endl;
+            }
+        }
+
+        libSmemory.Free();
+        std::cout << Cons("INF> Библиотека выгружена") << std::endl;
+    }
+
+#ifdef NDIAG
+    if( pNDiag )
+        pNDiag->Close();
+#endif//NDIAG
 }

@@ -1,6 +1,8 @@
 #ifndef CONS_H
 #define CONS_H
 
+#include <iostream>
+
 std::string inline Cons(const char* pText)
 {
     std::string sRes;
